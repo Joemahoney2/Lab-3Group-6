@@ -6,15 +6,11 @@ from tkinter import font
 from PIL import Image
 from PIL import ImageTk
 from tkinter import *
+import Top
 
-winWidth = 0
-winHeight = 0
-manualButton = 0
-autoButton = 0
-coopButton = 0
-compButton = 0
-inst1Text = 0
-inst2Text = 0
+
+
+
 
 class GUI(Frame):
   
@@ -52,7 +48,59 @@ class GUI(Frame):
     def compPressed(self):
         
         self.buttonDown(down = compButton, up = coopButton)
-                
+    
+    def keyPressed(self,event):
+        
+        keyHit = event.keysym
+        if(keyHit=='a'):
+           print('a')
+        elif(keyHit=='w'):
+           print('w')
+        elif(keyHit=='s'):
+           print('s')
+        elif(keyHit=='d'):
+           print('d')
+        elif(keyHit=='f'):
+           print('f')
+        elif(keyHit=='p'):
+           print('p')
+        elif(keyHit=='Left'):
+           print('left arrow')
+        elif(keyHit=='Right'):
+           print('right arrow')
+        elif(keyHit=='Up'):
+           print('up arrow')
+        elif(keyHit=='Down'):
+           print('down arrow')
+        else:
+           print('none')
+           
+    def keyReleased(self,event):
+        
+        keyHit = event.keysym
+        if(keyHit=='a'):
+           print('a released')
+        elif(keyHit=='w'):
+           print('w released')
+        elif(keyHit=='s'):
+           print('s released')
+        elif(keyHit=='d'):
+           print('d released')
+        elif(keyHit=='f'):
+           print('f released')
+        elif(keyHit=='p'):
+           print('p released')
+        elif(keyHit=='Left'):
+           print('left arrow released')
+        elif(keyHit=='Right'):
+           print('right arrow released')
+        elif(keyHit=='Up'):
+           print('up arrow released')
+        elif(keyHit=='Down'):
+           print('down arrow released')
+        else:
+           print('none released')
+                       
     def initUI(self):
       
         self.master.title("Robot Flag Finders")
@@ -115,7 +163,7 @@ class GUI(Frame):
         global inst2Text
         inst2Text = Button(inst2Frame, text="Rover 2 driving directions:\n  up arrow: forward\n  left arrow: left\n  back arrow: backward\n  right arrow: right\n  p: flag pickup")
         inst2Text.pack(fill=BOTH, expand=1)
-        inst2Text.bind('<Button-2>', lambda e: 'break')
+        inst2Text.bind('<Button-1>', lambda e: 'break')
 
         inst2Text['font'] = helv14
         inst2Text['justify'] = LEFT
@@ -194,7 +242,7 @@ class GUI(Frame):
         self.canvas.pack()
         
         ##### ENTER URL ##### (webcam = 1)
-        self.video_source2 = 'http://admin:admin@192.168.1.133:8081/' 
+        self.video_source2 = 0#'http://admin:admin@192.168.1.133:8081/' 
         #####################
         
         self.vid2 = VideoStream(self.video_source2)
@@ -205,10 +253,17 @@ class GUI(Frame):
         self.canvas2 = tkinter.Canvas(self.vid2Frame, width = self.vid2.width, height = self.vid2.height)
         self.canvas2.pack()
         
-        self.delay = 15
-        self.update()
+        #### REPSOND TO KEYBOARD INPUT ####
         
-    def update(self):
+        self.bind_all("<Key>",self.keyPressed)
+        self.bind_all("<KeyRelease>",self.keyReleased)
+        
+        ###################################
+        
+        self.delay = 15
+        self.vidupdate()
+        
+    def vidupdate(self):
         # Get a frame from the video source
         ret, frame = self.vid.get_frame()
         ret2, frame2 = self.vid2.get_frame()
@@ -220,8 +275,9 @@ class GUI(Frame):
             self.photo2 = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame2))
             self.canvas2.create_image(0, 0, image = self.photo2, anchor = tkinter.NW)
  
-        self.vidFrame.after(self.delay, self.update)
+        self.vidFrame.after(self.delay, self.vidupdate)
         #self.vid2Frame.after(self.delay, self.update)
+        
 
 class VideoStream:
     def __init__(self, video_source=1):
@@ -249,14 +305,13 @@ class VideoStream:
     def __del__(self):
         if self.vid.isOpened():
             self.vid.release()
-        
+
 def main():
   
     root = Tk()
     
-    app = GUI()
+    app = GUI()    
     root.mainloop()  
-
-
+    
 if __name__ == '__main__':
     main()  
