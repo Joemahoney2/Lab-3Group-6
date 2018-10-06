@@ -1,8 +1,10 @@
 import tkinter
+import cv2
+import PIL.Image
+import PIL.ImageTk
 from tkinter import font
 from PIL import Image
 from PIL import ImageTk
-#from tkinter.ttk import Frame, Button, Style
 from tkinter import *
 
 winWidth = 0
@@ -90,7 +92,7 @@ class GUI(Frame):
         
         inst1Frame = Frame(self, height=int(.346*winHeight), width=int(.162*winWidth))
         inst1Frame.pack_propagate(0) # don't shrink
-        inst1Frame.place(x = 400, y = int(.63*winHeight))
+        inst1Frame.place(x = 400, y = int(.66*winHeight))
                 
         global inst1Text
         inst1Text = Button(inst1Frame, text="Rover 1 driving directions:\n  w: forward\n  a: left\n  s: backward\n  d: right\n  f: flag pickup")
@@ -108,7 +110,7 @@ class GUI(Frame):
         
         inst2Frame = Frame(self, height=int(.346*winHeight), width=int(.162*winWidth))
         inst2Frame.pack_propagate(0) # don't shrink
-        inst2Frame.place(x = 400+2*int(.14*winWidth), y = int(.63*winHeight))
+        inst2Frame.place(x = 400+2*int(.12*winWidth), y = int(.66*winHeight))
                 
         global inst2Text
         inst2Text = Button(inst2Frame, text="Rover 2 driving directions:\n  up arrow: forward\n  left arrow: left\n  back arrow: backward\n  right arrow: right\n  p: flag pickup")
@@ -148,8 +150,61 @@ class GUI(Frame):
         compButton['font'] = helv18
         compButton['bg'] = 'red'
         compButton['relief'] = SUNKEN
+        
+####################################### VIDEO STREAM #############################################        
+        
+        # https://solarianprogrammer.com/2018/04/21/python-opencv-show-video-tkinter-window/
+        
+        ##### ENTER URL ##### (webcam = 1)
+        self.video_source = 1; 
+        #####################
+        
+        self.vid = VideoStream(self.video_source)
+        self.vidFrame = Frame(self, height=self.vid.height, width=self.vid.width)
+        self.vidFrame.pack_propagate(0) # don't shrink
+        self.vidFrame.place(x = 30, y = 10)
+               
+        self.canvas = tkinter.Canvas(self.vidFrame, width = self.vid.width, height = self.vid.height)
+        self.canvas.pack()
+        self.delay = 15
+        self.update()
+        
+    def update(self):
+        # Get a frame from the video source
+        ret, frame = self.vid.get_frame()
 
+        if ret:
+            self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame))
+            self.canvas.create_image(0, 0, image = self.photo, anchor = tkinter.NW)
+ 
+        self.vidFrame.after(self.delay, self.update)
 
+class VideoStream:
+    def __init__(self, video_source=1):
+        # Open the video source
+        self.vid = cv2.VideoCapture(video_source)
+        if not self.vid.isOpened():
+            raise ValueError("Unable to open video source", video_source)
+ 
+        # Get video source width and height
+        self.width = self.vid.get(cv2.CAP_PROP_FRAME_WIDTH)
+        self.height = self.vid.get(cv2.CAP_PROP_FRAME_HEIGHT)
+ 
+    def get_frame(self):
+        if self.vid.isOpened():
+            ret, frame = self.vid.read()
+            if ret:
+                # Return a boolean success flag and the current frame converted to BGR
+                return (ret, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+            else:
+                return (ret, None)
+        else:
+            return (ret, None)
+ 
+    # Release the video source when the object is destroyed
+    def __del__(self):
+        if self.vid.isOpened():
+            self.vid.release()
         
 def main():
   
