@@ -92,7 +92,7 @@ class GUI(Frame):
         
         inst1Frame = Frame(self, height=int(.346*winHeight), width=int(.162*winWidth))
         inst1Frame.pack_propagate(0) # don't shrink
-        inst1Frame.place(x = 400, y = int(.66*winHeight))
+        inst1Frame.place(x = 400, y = int(.7*winHeight))
                 
         global inst1Text
         inst1Text = Button(inst1Frame, text="Rover 1 driving directions:\n  w: forward\n  a: left\n  s: backward\n  d: right\n  f: flag pickup")
@@ -110,7 +110,7 @@ class GUI(Frame):
         
         inst2Frame = Frame(self, height=int(.346*winHeight), width=int(.162*winWidth))
         inst2Frame.pack_propagate(0) # don't shrink
-        inst2Frame.place(x = 400+2*int(.12*winWidth), y = int(.66*winHeight))
+        inst2Frame.place(x = 400+2*int(.12*winWidth), y = int(.7*winHeight))
                 
         global inst2Text
         inst2Text = Button(inst2Frame, text="Rover 2 driving directions:\n  up arrow: forward\n  left arrow: left\n  back arrow: backward\n  right arrow: right\n  p: flag pickup")
@@ -123,6 +123,32 @@ class GUI(Frame):
         inst2Text['relief'] = FLAT
         
         inst2Text.pack_forget()
+        
+####################################### FLAG TEXT ###############################################
+        
+        flag1Frame = Frame(self, height=int(.05*winHeight), width=int(.162*winWidth))
+        flag1Frame.pack_propagate(0) # don't shrink
+        flag1Frame.place(x = 400, y = int(.64*winHeight))
+                
+        global flag1Text
+        flag1Text = Label(flag1Frame, text="Flags retrieved: 0")
+        flag1Text.pack(fill=BOTH, expand=1)
+        
+        helv16 = font.Font(family='Helvetica', size=16, weight = 'bold')
+        
+        flag1Text['font'] = helv16
+        flag1Text['justify'] = LEFT
+        
+        flag2Frame = Frame(self, height=int(.05*winHeight), width=int(.162*winWidth))
+        flag2Frame.pack_propagate(0) # don't shrink
+        flag2Frame.place(x = 400+2*int(.12*winWidth), y = int(.64*winHeight))
+                
+        global flag2Text
+        flag2Text = Label(flag2Frame, text="Flags retrieved: 0")
+        flag2Text.pack(fill=BOTH, expand=1)
+        
+        flag2Text['font'] = helv16
+        flag2Text['justify'] = LEFT
         
 ####################################### COOP BUTTON #############################################        
         
@@ -166,18 +192,36 @@ class GUI(Frame):
                
         self.canvas = tkinter.Canvas(self.vidFrame, width = self.vid.width, height = self.vid.height)
         self.canvas.pack()
+        
+        ##### ENTER URL ##### (webcam = 1)
+        self.video_source2 = 'http://admin:admin@192.168.1.133:8081/' 
+        #####################
+        
+        self.vid2 = VideoStream(self.video_source2)
+        self.vid2Frame = Frame(self, height=self.vid2.height, width=self.vid2.width)
+        self.vid2Frame.pack_propagate(0) # don't shrink
+        self.vid2Frame.place(x = winWidth/2, y = 10)
+               
+        self.canvas2 = tkinter.Canvas(self.vid2Frame, width = self.vid2.width, height = self.vid2.height)
+        self.canvas2.pack()
+        
         self.delay = 15
         self.update()
         
     def update(self):
         # Get a frame from the video source
         ret, frame = self.vid.get_frame()
+        ret2, frame2 = self.vid2.get_frame()
 
         if ret:
             self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame))
             self.canvas.create_image(0, 0, image = self.photo, anchor = tkinter.NW)
+        if ret2:
+            self.photo2 = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame2))
+            self.canvas2.create_image(0, 0, image = self.photo2, anchor = tkinter.NW)
  
         self.vidFrame.after(self.delay, self.update)
+        #self.vid2Frame.after(self.delay, self.update)
 
 class VideoStream:
     def __init__(self, video_source=1):
