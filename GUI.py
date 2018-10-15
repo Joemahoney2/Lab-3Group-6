@@ -9,9 +9,14 @@ from tkinter import *
 import Top
 
 
+'''
+    TODO:
+    	Send key press/release info to Top
+    	Send button click info to Top (auto, manual, coop, and competitive)
+    	Receive Label update info from Top
 
-
-
+'''
+#keyHit = 'x'
 class GUI(Frame):
   
     def __init__(self):
@@ -32,6 +37,7 @@ class GUI(Frame):
         compButton.pack(fill=BOTH, expand=1)
         inst1Text.pack_forget()
         inst2Text.pack_forget()
+        self.manualMode = 0
     
     def manualPressed(self):
         
@@ -40,6 +46,7 @@ class GUI(Frame):
         compButton.pack_forget()
         inst1Text.pack(fill=BOTH, expand=1)
         inst2Text.pack(fill=BOTH, expand=1)
+        self.manualMode = 1
         
     def coopPressed(self):
         
@@ -51,21 +58,31 @@ class GUI(Frame):
     
     def keyPressed(self,event):
         
+        if(not self.manualMode):
+           return
+       # global keyHit
         keyHit = event.keysym
         if(keyHit=='a'):
            print('a')
+           self.transmit.send('a')
         elif(keyHit=='w'):
            print('w')
+           self.transmit.send('w')
         elif(keyHit=='s'):
            print('s')
+           self.transmit.send('s')
         elif(keyHit=='d'):
            print('d')
+           self.transmit.send('d')
         elif(keyHit=='f'):
            print('f')
+           self.transmit.send('f')
         elif(keyHit=='p'):
            print('p')
+           self.transmit.send('p')
         elif(keyHit=='Left'):
            print('left arrow')
+        #   self.transmit.send('w')
         elif(keyHit=='Right'):
            print('right arrow')
         elif(keyHit=='Up'):
@@ -77,11 +94,13 @@ class GUI(Frame):
            
     def keyReleased(self,event):
         
+        if(not self.manualMode):
+           return
         keyHit = event.keysym
         if(keyHit=='a'):
            print('a released')
         elif(keyHit=='w'):
-           print('w released')
+           print('w released')         
         elif(keyHit=='s'):
            print('s released')
         elif(keyHit=='d'):
@@ -100,6 +119,7 @@ class GUI(Frame):
            print('down arrow released')
         else:
            print('none released')
+        self.transmit.send('x')
                        
     def initUI(self):
       
@@ -135,6 +155,8 @@ class GUI(Frame):
         autoButton['font'] = helv18
         autoButton['bg'] = 'red'
         autoButton['relief'] = SUNKEN
+        
+        self.manualMode = 0
 
 ####################################### TEXT INSTRUCTIONS #######################################        
         
@@ -241,8 +263,9 @@ class GUI(Frame):
         self.canvas = tkinter.Canvas(self.vidFrame, width = self.vid.width, height = self.vid.height)
         self.canvas.pack()
         
+        print('Loading video feeds')
         ##### ENTER URL ##### (webcam = 1)
-        self.video_source2 = 0#'http://admin:admin@192.168.1.133:8081/' 
+        self.video_source2 = 'http://admin:admin@10.161.76.129:8081' #'http://admin:admin@192.168.0.4:8081/' 
         #####################
         
         self.vid2 = VideoStream(self.video_source2)
@@ -253,6 +276,7 @@ class GUI(Frame):
         self.canvas2 = tkinter.Canvas(self.vid2Frame, width = self.vid2.width, height = self.vid2.height)
         self.canvas2.pack()
         
+        self.transmit = Top.BT()
         #### REPSOND TO KEYBOARD INPUT ####
         
         self.bind_all("<Key>",self.keyPressed)
@@ -262,6 +286,8 @@ class GUI(Frame):
         
         self.delay = 15
         self.vidupdate()
+        #self.transmit.close()
+        
         
     def vidupdate(self):
         # Get a frame from the video source
@@ -311,7 +337,9 @@ def main():
     root = Tk()
     
     app = GUI()    
-    root.mainloop()  
+    root.mainloop()
+    app.transmit.close() 
+    print('Connection closed')
     
 if __name__ == '__main__':
     main()  
