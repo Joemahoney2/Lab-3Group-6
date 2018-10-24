@@ -1,1 +1,42 @@
 
+#include <msp430.h>
+
+const int deg0 = 700;//ms
+const int deg45 = 1100;
+const int deg90 = 1500;
+const int deg145 = 1900;
+const int deg180 = 2800;
+
+
+/**
+ * main.c
+ *
+ *
+ */
+//function prototypes
+int main(void)
+{
+    WDTCTL = WDTPW | WDTHOLD;   // stop watchdog timer
+    DCOCTL = 0;                               // Select lowest DCOx and MODx settings
+    BCSCTL1 = CALBC1_1MHZ;                    // Set range
+    DCOCTL = CALDCO_1MHZ;                     // Set DCO step + modulation
+
+    //output servo p2.1 + p2.4
+    P2DIR   |= BIT1+BIT4;
+    P2SEL   |= BIT1+BIT4;
+
+    //timer Setup
+    TA1CTL = TASSEL_2 + MC_1;//sets up timer A1
+    TA1CCTL1 = OUTMOD_7;
+    TA1CCTL2 = OUTMOD_7;
+
+    TA1CCR0 = 20000;//50Hz @1MHz FRQ
+
+    //DUTY
+    TA1CCR1 = deg90;//nutral poss/ editable variables
+    TA1CCR2 = deg180;//
+
+
+
+    __bis_SR_register(LPM0_bits + GIE); // Enter LPM0, interrupts enabled
+}
