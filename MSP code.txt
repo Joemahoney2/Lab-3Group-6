@@ -7,7 +7,7 @@
 
 unsigned int PWM_Period     = (MCU_CLOCK / PWM_FREQUENCY);  // PWM Period
 unsigned int PWM_Duty       = 8000;
-const int deg0 = 700;//ms
+const int deg0 = 500;//ms
 const int deg45 = 1100;
 const int deg90 = 1500;
 const int deg145 = 2100; //1900
@@ -90,36 +90,37 @@ void main(void)
         }
     }*/
 }
-void time_delay(unsigned int helper)
-{
-    unsigned int helper2 = 65535;
-  while(helper>0)
-  {
-    helper--;
-    helper2 = 65535;
-    while(helper2>0)
-    {
-        helper2--;
-    }
-  }
-  return;
-}
+
 
 void deployArm(){
     P2SEL |= BIT6;
     TA0CCR1  = deg0;        // Arm in front of rover
-    time_delay(ARM_DELAY);  // Wait for arm to get to front
+    _delay_cycles(1500000); // Wait for arm to get to front
+
+    P2SEL &= ~BIT6;         // Disable arm servo
     // Set up and enable P1.6 for claw servo
     P1SEL |= BIT6;
     P1SEL2 &= ~BIT6;
     P1DIR |= BIT6;
     P1OUT &= ~BIT6;
 
-    P2SEL &= ~BIT6;         // Disable arm servo
-    TA0CCR1  = deg145;        // Close claw
-    while(1){}
 
-   // TA0CCR1  = PWM_Duty;
+    TA0CCR1  = deg145;        // Close claw
+    _delay_cycles(1500000); // Wait for claw to close
+    //P1SEL &= ~BIT6;         // Disable claw
+    P2SEL |= BIT6;          // Enable arm
+
+    TA0CCR1  = deg180;        // Arm in back of rover
+    _delay_cycles(1500000); // Wait for arm to get to back
+    P2SEL &= ~BIT6;         // Disable arm
+    P1SEL |= BIT6;          // Enable claw
+    TA0CCR1  = deg0;        // Open claw
+    _delay_cycles(1500000); // Wait for claw to open
+    P1SEL &= ~BIT6;         // Disable claw\
+
+   // while(1){}
+
+    TA0CCR1  = PWM_Duty;
 }
 /* This interrupt is triggered when the MSP430G2553(MCU) receives
  * data via UART communication. It is responsible for changing the
@@ -170,9 +171,9 @@ __interrupt void USCI0RX_ISR(void){
     case 'f':{
         P2OUT &= 0xCF; // Disable motors
         P2OUT &= ~0x0F; // Don't Move Rover
-     //   IE2 &= ~UCA0RXIE;        // Disable USCI_A0 RX interrupt
+        IE2 &= ~UCA0RXIE;        // Disable USCI_A0 RX interrupt
         deployArm();
-     //   IE2 |= UCA0RXIE;        // Enable USCI_A0 RX interrupt
+        IE2 |= UCA0RXIE;        // Enable USCI_A0 RX interrupt
     }
     case 'x':{
         //run = '0';
