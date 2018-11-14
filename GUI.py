@@ -14,14 +14,19 @@ import Top
     	Send key press/release info to Top
     	Send button click info to Top (auto, manual, coop, and competitive)
     	Receive Label update info from Top
+    	
+    	Import video sources and bluetooth destinations from top module
 
 '''
 #keyHit = 'x'
 class GUI(Frame):
   
-    def __init__(self):
+    def __init__(self, transmit, vid, vid2, OD1):
         super().__init__()
-         
+        self.transmit = transmit 
+        self.vid = vid
+        self.vid2 = vid2
+        self.OD1 = OD1
         self.initUI()
        
     def buttonDown(self, down, up):
@@ -38,6 +43,7 @@ class GUI(Frame):
         inst1Text.pack_forget()
         inst2Text.pack_forget()
         self.manualMode = 0
+        self.OD1.auto = 1
     
     def manualPressed(self):
         
@@ -47,6 +53,7 @@ class GUI(Frame):
         inst1Text.pack(fill=BOTH, expand=1)
         inst2Text.pack(fill=BOTH, expand=1)
         self.manualMode = 1
+        self.OD1.auto = 0
         
     def coopPressed(self):
         
@@ -79,16 +86,19 @@ class GUI(Frame):
            self.transmit.send('f')
         elif(keyHit=='p'):
            print('p')
-           self.transmit.send('p')
+        #   self.transmit.send('p')
         elif(keyHit=='Left'):
            print('left arrow')
-        #   self.transmit.send('w')
+        #   self.transmit.send('j')
         elif(keyHit=='Right'):
            print('right arrow')
+        #   self.transmit.send('l')
         elif(keyHit=='Up'):
            print('up arrow')
+        #   self.transmit.send('i')
         elif(keyHit=='Down'):
            print('down arrow')
+        #   self.transmit.send('k')
         else:
            print('none')
            
@@ -255,7 +265,7 @@ class GUI(Frame):
         self.video_source = 1; 
         #####################
         
-        self.vid = VideoStream(self.video_source)
+        #self.vid = Top.VideoStream(self.video_source)
         self.vidFrame = Frame(self, height=self.vid.height, width=self.vid.width)
         self.vidFrame.pack_propagate(0) # don't shrink
         self.vidFrame.place(x = 30, y = 10)
@@ -263,12 +273,12 @@ class GUI(Frame):
         self.canvas = tkinter.Canvas(self.vidFrame, width = self.vid.width, height = self.vid.height)
         self.canvas.pack()
         
-        print('Loading video feeds')
+        
         ##### ENTER URL ##### (webcam = 1)
-        self.video_source2 = 'http://admin:admin@10.161.76.129:8081' #'http://admin:admin@192.168.0.4:8081/' 
+        self.video_source2 = 0#'http://admin:admin@10.161.76.129:8081' #'http://admin:admin@192.168.0.4:8081/' 
         #####################
         
-        self.vid2 = VideoStream(self.video_source2)
+        #self.vid2 = Top.VideoStream(self.video_source2)
         self.vid2Frame = Frame(self, height=self.vid2.height, width=self.vid2.width)
         self.vid2Frame.pack_propagate(0) # don't shrink
         self.vid2Frame.place(x = winWidth/2, y = 10)
@@ -276,7 +286,7 @@ class GUI(Frame):
         self.canvas2 = tkinter.Canvas(self.vid2Frame, width = self.vid2.width, height = self.vid2.height)
         self.canvas2.pack()
         
-        self.transmit = Top.BT()
+        #self.transmit = Top.BT()
         #### REPSOND TO KEYBOARD INPUT ####
         
         self.bind_all("<Key>",self.keyPressed)
@@ -284,62 +294,24 @@ class GUI(Frame):
         
         ###################################
         
-        self.delay = 15
+        self.delay = 50
         self.vidupdate()
         #self.transmit.close()
         
         
     def vidupdate(self):
         # Get a frame from the video source
-        ret, frame = self.vid.get_frame()
-        ret2, frame2 = self.vid2.get_frame()
+        frame = self.vid.get_frame()
+        #frame2 = self.vid2.get_frame()
 
-        if ret:
-            self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame))
-            self.canvas.create_image(0, 0, image = self.photo, anchor = tkinter.NW)
-        if ret2:
-            self.photo2 = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame2))
-            self.canvas2.create_image(0, 0, image = self.photo2, anchor = tkinter.NW)
+        
+        # *** Inside these if statements we need reference back to Object_Detection code to update *** # 
+        self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame))
+        self.canvas.create_image(0, 0, image = self.photo, anchor = tkinter.NW)
+        self.OD1.updateVid(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        
+        #self.photo2 = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame2))
+        #self.canvas2.create_image(0, 0, image = self.photo2, anchor = tkinter.NW)
  
         self.vidFrame.after(self.delay, self.vidupdate)
-        #self.vid2Frame.after(self.delay, self.update)
-        
-
-class VideoStream:
-    def __init__(self, video_source=1):
-        # Open the video source
-        self.vid = cv2.VideoCapture(video_source)
-        if not self.vid.isOpened():
-            raise ValueError("Unable to open video source", video_source)
- 
-        # Get video source width and height
-        self.width = self.vid.get(cv2.CAP_PROP_FRAME_WIDTH)
-        self.height = self.vid.get(cv2.CAP_PROP_FRAME_HEIGHT)
- 
-    def get_frame(self):
-        if self.vid.isOpened():
-            ret, frame = self.vid.read()
-            if ret:
-                # Return a boolean success flag and the current frame converted to BGR
-                return (ret, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-            else:
-                return (ret, None)
-        else:
-            return (ret, None)
- 
-    # Release the video source when the object is destroyed
-    def __del__(self):
-        if self.vid.isOpened():
-            self.vid.release()
-
-def main():
-  
-    root = Tk()
-    
-    app = GUI()    
-    root.mainloop()
-    app.transmit.close() 
-    print('Connection closed')
-    
-if __name__ == '__main__':
-    main()  
+       
