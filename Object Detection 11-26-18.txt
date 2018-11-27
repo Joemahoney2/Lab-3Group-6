@@ -25,23 +25,30 @@ class Obj_Detection():
         self.flagPickup = 0
         self.coop = 1
         self.turns = 0
+        self.noFlagTurn = 1
+        self.flagSeen = 0
 
     # Driving instructions when no flag is seen
     def noFlag(self):
+        
+        self.flagSeen = 0
         self.flagPickup = 0
         print("no flag")
+        if self.noFlagTurn == 0:
+            self.transmit.send('w')
+        else:
+            self.transmit.send('d')
+        
+        '''
         if self.turns == 4:
             self.transmit.send('w')
             self.turns = 0
         else:
             self.turns += 1
             self.transmit.send('d')
-    
+        '''
     def updateVid(self,frame):
-        #ret, frame = self.vs.get_frame(0)
-    #handle the frame from vidcap or vidstream
-        #frame = frame[1] if self.args.get("video", False) else frame
-    #if we dont get a frame, end of video
+
         if frame is None:
             return
         if self.auto == 0:
@@ -75,17 +82,22 @@ class Obj_Detection():
 
         #only proceed if the radius meets a minimum size
             # Position rover so flag is in center of screen for pickup
-            if radius > 70: #120               
+            if radius > 70: #120 
+                self.flagSeen = 1              
                 if self.centerx > 420:     #flag is right of center 340
                     self.transmit.send('d')
+                    self.flagPickup = 0
                 elif self.centerx < 220:   #flag is left of center 300
                     self.transmit.send('a')
+                    self.flagPickup = 0
                 elif 220 <= self.centerx <= 420: # 300 - 340
                     self.transmit.send('f')
                     self.flagPickup = 1
 
             # Normal driving when flag seen
             elif radius > 10:
+                self.flagSeen = 1
+                self.flagPickup = 0
                 if self.centerx > 420:     #flag is right of center 340
                     self.transmit.send('d')
                 elif self.centerx < 220:   #flag is left of center 300
