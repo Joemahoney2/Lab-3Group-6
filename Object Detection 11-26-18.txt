@@ -1,0 +1,123 @@
+#import the necessary packages
+from collections import deque
+from imutils.video import VideoStream
+import numpy as np
+import argparse
+import cv2
+import imutils
+import time
+
+
+class Obj_Detection():
+
+    def __init__(self,vs,transmit):
+    ### Setup ########################################################
+        self.transmit = transmit
+        self.vs = vs
+        self.auto = 1
+
+        # Define upper and lower bounds of color target and start buffer
+        self.colorLower = (110,50,50)
+        self.colorUpper = (130,255,255)
+
+        # allow  camera/video to warm up
+        #time.sleep(2.0)
+        self.flagPickup = 0
+        self.coop = 1
+        self.turns = 0
+
+    # Driving instructions when no flag is seen
+    def noFlag(self):
+        self.flagPickup = 0
+        print("no flag")
+        if self.turns == 4:
+            self.transmit.send('w')
+            self.turns = 0
+        else:
+            self.turns += 1
+            self.transmit.send('d')
+    
+    def updateVid(self,frame):
+        #ret, frame = self.vs.get_frame(0)
+    #handle the frame from vidcap or vidstream
+        #frame = frame[1] if self.args.get("video", False) else frame
+    #if we dont get a frame, end of video
+        if frame is None:
+            return
+        if self.auto == 0:
+            return
+    #resize the frame, blur, and convert to HSV color
+    #frame = imutils.resize(frame, width=600)
+        cv2.resize(frame, (0,0), fx=0.5,fy=0.5)
+        blurred = cv2.GaussianBlur(frame, (11,11), 0)
+        hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
+    
+    #construct mask for color and use dilations&ersosions to reduce small noises
+        mask = cv2.inRange(hsv, self.colorLower, self.colorUpper)
+        mask = cv2.erode(mask, None, iterations=2)
+        mask = cv2.dilate(mask, None, iterations=2)
+    
+    
+### Contour Draw ################################################
+    #find contours in mask and find center(x,y) of the object
+        cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = cnts[0] if imutils.is_cv2() else cnts[1]
+        #self.center = None
+    
+    #only proceed is at least one contour was found
+        if len(cnts) > 0:
+        #find largest contour in mask, use it to compute min circle and center
+            c = max(cnts, key=cv2.contourArea)
+            ((x,y), radius) = cv2.minEnclosingCircle(c)
+            M = cv2.moments(c)
+            #self.center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+            self.centerx = int(M["m10"] / M["m00"])
+
+        #only proceed if the radius meets a minimum size
+            # Position rover so flag is in center of screen for pickup
+            if radius > 70: #120               
+                if self.centerx > 420:     #flag is right of center 340
+                    self.transmit.send('d')
+                elif self.centerx < 220:   #flag is left of center 300
+                    self.transmit.send('a')
+                elif 220 <= self.centerx <= 420: # 300 - 340
+                    self.transmit.send('f')
+                    self.flagPickup = 1
+
+            # Normal driving when flag seen
+            elif radius > 10:
+                if self.centerx > 420:     #flag is right of center 340
+                    self.transmit.send('d')
+                elif self.centerx < 220:   #flag is left of center 300
+                    self.transmit.send('a')
+                elif 220 <= self.centerx <= 420: # 300 - 340
+                    self.transmit.send('w')
+            
+            # No flag seen
+            else:
+                self.noFlag()
+        # No flag seen
+        else:
+            self.noFlag()
+        
+    ### Find Center of screen and compare with (x,y) of flag #############
+
+        
+               
+        
+    #display frame to screen
+        #cv2.imshow("Frame", frame)
+        key = cv2.waitKey(1) & 0xFF
+
+####################################################################################################
+
+### Ending #########################################################3
+    def __del__(self):
+#if not using a video file, stop cam video stream
+        if not self.args.get("video", False):
+            self.vs.stop()
+#otherwise release cam
+        else:
+            self.vs.release()
+#close all windows
+        cv2.destroyAllWindows()
