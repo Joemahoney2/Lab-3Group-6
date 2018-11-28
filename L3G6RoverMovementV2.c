@@ -88,10 +88,11 @@ void main(void)
     P2SEL &= 0x00;
     P2SEL |= 0x06; // 2.1,2.2 PWM
     P2SEL2 &= 0x00;
+
     P2DIR |= 0xD6; // 2.1,2.2,2.4,2.6,2.7 outputs
     P2REN |= 0x29;
     P2IE |= 0x29;
-    P2OUT = 0x00;
+    P2OUT = 0x10;
 
     // Configure hardware UART
     P1SEL |= BIT1 + BIT2;    // P1.1 = RXD, P1.2=TXD
@@ -140,21 +141,21 @@ __interrupt void Port2_ISR()
     else if(P2IFG & BIT0){
         director(0x00);
         wait(110000);
-        director(0x80);
+        director(0x40);
         wait(110000);
         director(0xC0);
         bump = 0;
     }
     // Hit something on left, turn right
     else if(P2IFG & BIT3){
-        director(0x80);
+        director(0x40);
         wait(110000);
         director(0xC0);
         bump = 0;
     }
     // Hit something on right, turn left
     else if(P2IFG & BIT5){
-        director(0x40);
+        director(0x80);
         wait(110000);
         director(0xC0);
         bump = 0;
@@ -201,7 +202,7 @@ __interrupt void USCI0RX_ISR(void){
     }
     break;
     case 'a':{
-        director(0x40);
+        director(0x80);
     }
     break;
     case 's':{
@@ -209,7 +210,7 @@ __interrupt void USCI0RX_ISR(void){
     }
     break;
     case 'd':{
-        director(0x80);
+        director(0x40);
     }
     break;
     case 'f':{
