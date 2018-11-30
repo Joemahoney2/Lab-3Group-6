@@ -83,10 +83,10 @@ class VideoStream2:
 def main():
 
     btTransmit1 = BT('00:06:66:F2:30:85',1)
-    btTransmit2 = BT('00:06:66:FC:19:4C',1)
+    btTransmit2 = BT('00:06:66:F2:4C:E4',1)
     # Web picture: http://10.161.103.207/html/cam_pic.php
     vs1 = VideoStream2('http://10.161.155.167/html/cam_pic.php')#'http://10.161.103.207/html/cam_pic_new.php')#1)    # Camera 1
-    vs2 = VideoStream2('https://cdn.hipwallpaper.com/m/68/69/zbMKjN.jpg')    # Camera 2
+    vs2 = VideoStream2('http://10.161.14.98/html/cam_pic.php')    # Camera 2
     
     
     #img.show()
@@ -98,8 +98,9 @@ def main():
     # MUST BE THE LAST THING THAT HAPPENS
     app = GUI.GUI(root,btTransmit1,btTransmit2,vs1,vs2,OD1,OD2)   #btTransmit1
     root.mainloop()
-    app.transmit.close() 
-    print('Connection closed')
+    app.transmit1.close() 
+    app.transmit2.close() 
+    print('Connections closed')
 
 
 if __name__ == '__main__':
